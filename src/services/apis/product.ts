@@ -1,36 +1,55 @@
-import axios from "axios";
+// apis/product.ts
+import { faker } from "@faker-js/faker";
+
+export type Product = {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+};
 
 export type QueryFindAll = {
-  offset?: number;
+  page?: number;
   limit?: number;
 };
 
-export type Product = {
-  id: number;
-  title: string;
-  price: number;
-  description: string;
-  categoryId: number;      // included when updating
-  category: {
-    id: number;
-    name: string;
-    image: string;
-    creationAt: string;
-    updatedAt: string;
+const TOTAL_PRODUCTS = 123; // Simulate total records
+
+function generateFakeProduct(): Product {
+  return {
+    id: faker.string.uuid(),
+    name: faker.commerce.productName(),
+    price: parseFloat(faker.commerce.price()),
+    description: faker.commerce.productDescription()
   };
-  images: string[];
-  slug: string;
-  creationAt: string;
-  updatedAt: string;
-};
+}
 
-const productService = {
-  async findAll(query?: QueryFindAll) {
-    const { data } = await axios.get<Product[]>("https://api.escuelajs.co/api/v1/products", {
-      params: { ...query }
-    });
-    return data;
-  }
-};
+function findAll(query?: QueryFindAll): Promise<{
+  data: Product[];
+  total: number;
+  page: number;
+  limit: number;
+}> {
+  const page = query?.page ?? 1;
+  const limit = query?.limit ?? 10;
 
-export default productService;
+  const start = (page - 1) * limit;
+
+  const data = Array.from({ length: Math.min(limit, TOTAL_PRODUCTS - start) }, generateFakeProduct);
+
+  return new Promise(
+    (resolve) =>
+      setTimeout(() => {
+        resolve({
+          data,
+          total: TOTAL_PRODUCTS,
+          page,
+          limit
+        });
+      }, 300) // simulate network latency
+  );
+}
+
+export default {
+  findAll
+};
